@@ -11,11 +11,16 @@ import com.nike.urbandictionary.responses.Failure
 import com.nike.urbandictionary.responses.EmptyResponse
 import com.nike.urbandictionary.responses.Responses
 import com.nike.urbandictionary.responses.Success
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.lang.Exception
+import java.util.*
 import javax.net.ssl.HttpsURLConnection
 
 const val TIMEOUT = 5000
@@ -29,29 +34,34 @@ class DictionaryEntrySourceImpl :
     override fun getDictionaryEntries() : Responses<List<DictionaryEntry>> =
         if (entries.isNotEmpty()) Success(entries) else EmptyResponse()
 
-    override fun requestDictionaryEntries(requestTerm: String): Responses<List<DictionaryEntry>> {
+    override fun requestDictionaryEntries(requestTerm: String): Responses<List<DictionaryEntry>> = runBlocking {
         val headers = listOf(
             listOf(HOST_HEADER_CONTENT, HOST_HEADER_TITLE),
             listOf(KEY_HEADER_TITLE, KEY_HEADER_CONTENT)
         )
         var connection: HttpsURLConnection? = null
 
-        return try {
-            connection = getHttpsRequest(buildRequestUrl(requestTerm), TIMEOUT, REQUEST, headers)
-            connection?.inputStream?.bufferedReader().use { it?.readText() }?.let {
-                Success(map(JSONObject(it))).takeIf {
-                        ret -> ret.data.isNotEmpty()
-                } ?: EmptyResponse<List<DictionaryEntry>>()
-            } ?: throw IOException()
-        } catch (e: Exception) {
-            errorMessage(when (e) {
-                is IOException, is UnsupportedEncodingException -> Some(e.localizedMessage)
-                else -> None
-            })
-            Failure(connection?.responseMessage ?: "unknown error")
-        } finally {
-            connection?.inputStream?.close()
-            connection?.disconnect()
+        withContext(Dispatchers.IO) {
+            try {
+                connection = getHttpsRequest(buildRequestUrl(requestTerm), TIMEOUT, REQUEST, headers)
+                connection?.inputStream?.bufferedReader().use { it?.readText() }?.let {
+                    Success(map(JSONObject(it))).takeIf { ret ->
+                        ret.data.isNotEmpty()
+                    } ?: EmptyResponse<List<DictionaryEntry>>()
+                } ?: throw IOException()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                errorMessage(
+                    when (e) {
+                        is IOException, is UnsupportedEncodingException -> Some(e.localizedMessage)
+                        else -> None
+                    }
+                )
+                Failure<List<DictionaryEntry>>(connection?.responseMessage ?: "unknown error")
+            } finally {
+                connection?.inputStream?.close()
+                connection?.disconnect()
+            }
         }
     }
 
@@ -77,7 +87,7 @@ class DictionaryEntrySourceImpl :
                     getLong("thumbs_up"),
                     getString("author"),
                     getString("written_on"),
-                    getString("examples"),
+                    getString("example"),
                     getLong("thumbs_down")
                 )
             }

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">urbandictionary</string>
+    <string name="new_instance">Search for a new term</string>
 </resources>

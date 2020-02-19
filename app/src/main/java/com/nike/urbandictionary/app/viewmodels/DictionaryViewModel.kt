@@ -1,12 +1,11 @@
 package com.nike.urbandictionary.app.viewmodels
 
 import android.app.Application
-import android.view.View
-import android.widget.SearchView
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.nike.urbandictionary.app.models.DictionaryEntryModel
 import com.nike.urbandictionary.app.RequestDictionaryEntries
+import com.nike.urbandictionary.app.removeBrackets
 import com.nike.urbandictionary.domain.DictionaryEntry
 import com.nike.urbandictionary.responses.EmptyResponse
 import com.nike.urbandictionary.responses.Failure
@@ -14,7 +13,7 @@ import com.nike.urbandictionary.responses.Responses
 import com.nike.urbandictionary.responses.Success
 import java.time.LocalDate
 
-const val DATE_RANGE = 10
+const val DATE_CHAR_COUNT = 10
 
 class DictionaryViewModel(
     application: Application,
@@ -22,48 +21,56 @@ class DictionaryViewModel(
 ) : AndroidViewModel(application) {
 
     var dictionaryEntries: MutableLiveData<List<DictionaryEntryModel>> = MutableLiveData()
-    private var orderAscendingLikes = true
+    private var orderDescendingLikes = true
 
     fun getDictionaryEntries(searchTerm: String) : Responses<String> =
         requestDictionaryEntries.invoke(searchTerm).let { response ->
             when (response) {
-                is EmptyResponse -> EmptyResponse()
-                is Failure -> handleErrors(response.reason)
+                is EmptyResponse -> {
+                    dictionaryEntries.value = emptyList()
+                    EmptyResponse()
+                }
+                is Failure -> {
+                    dictionaryEntries.value = emptyList()
+                    handleErrors(response.reason)
+                }
                 is Success -> {
-                    dictionaryEntries.value = response.data.map { entry -> transformDictionaryEntry(entry) }
+                    dictionaryEntries.value = response.data.map { entry ->
+                        transformDictionaryEntry(entry)
+                    }.sortListByLikes(orderDescendingLikes)
                     Success("")
                 }
             }
         }
 
     fun onFilterButtonClick() {
-        orderAscendingLikes = !orderAscendingLikes
-        sortListByLikes(orderAscendingLikes)
+        orderDescendingLikes = !orderDescendingLikes
+        dictionaryEntries.value = dictionaryEntries.value?.sortListByLikes(orderDescendingLikes)
     }
 
-    private fun sortListByLikes(sortLikesAscending: Boolean) =
-        dictionaryEntries.value?.sortedBy {
+    fun isOrderedAscending() = orderDescendingLikes
+
+    private fun List<DictionaryEntryModel>.sortListByLikes(sortLikesAscending: Boolean): List<DictionaryEntryModel> =
+        toMutableList().sortedByDescending {
             if (sortLikesAscending) it.thumbsUp else it.thumbsDown
         }
 
-    private fun handleErrors(msg: String) : Failure<String> {
-        return Failure("")
-    }
+    private fun handleErrors(msg: String) : Failure<String> = Failure(msg)
 
     private fun transformDictionaryEntry(entry: DictionaryEntry) : DictionaryEntryModel {
         val authorLine = prepareAuthorLine(
             entry.author,
-            LocalDate.parse(entry.creationDate.substring(0 until DATE_RANGE)).toString()
+            LocalDate.parse(entry.creationDate.substring(0 until DATE_CHAR_COUNT)).toString()
         )
 
         return entry.run {
             DictionaryEntryModel(
                 searchWord,
-                definition.replace("[", "").replace("]", ""),
-                thumbsUp.toString(),
+                definition.removeBrackets(),
+                thumbsUp,
                 authorLine,
-                examples,
-                thumbsDown.toString()
+                examples.removeBrackets(),
+                thumbsDown
             )
         }
     }
