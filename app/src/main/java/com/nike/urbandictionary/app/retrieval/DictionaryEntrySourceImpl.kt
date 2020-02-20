@@ -12,27 +12,20 @@ import com.nike.urbandictionary.responses.EmptyResponse
 import com.nike.urbandictionary.responses.Responses
 import com.nike.urbandictionary.responses.Success
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.lang.Exception
-import java.util.*
 import javax.net.ssl.HttpsURLConnection
 
 const val TIMEOUT = 5000
 const val REQUEST = "GET"
 
-class DictionaryEntrySourceImpl :
-    DictionaryEntrySource {
-
-    var entries = emptyList<DictionaryEntry>()
-
-    override fun getDictionaryEntries() : Responses<List<DictionaryEntry>> =
-        if (entries.isNotEmpty()) Success(entries) else EmptyResponse()
+class DictionaryEntrySourceImpl : DictionaryEntrySource {
 
     override fun requestDictionaryEntries(requestTerm: String): Responses<List<DictionaryEntry>> = runBlocking {
         val headers = listOf(
@@ -41,6 +34,8 @@ class DictionaryEntrySourceImpl :
         )
         var connection: HttpsURLConnection? = null
 
+        if (requestTerm.isBlank())
+            return@runBlocking EmptyResponse<List<DictionaryEntry>>()
         withContext(Dispatchers.IO) {
             try {
                 connection = getHttpsRequest(buildRequestUrl(requestTerm), TIMEOUT, REQUEST, headers)
@@ -75,6 +70,7 @@ class DictionaryEntrySourceImpl :
 
     override fun buildRequestUrl(requestTerm: String): String = "$API_URL$requestTerm"
 
+    @Throws(JSONException::class)
     override fun map(json: JSONObject): List<DictionaryEntry> {
         val itemList = json.getJSONArray("list") ?: JSONArray()
         val listSize = itemList.length()

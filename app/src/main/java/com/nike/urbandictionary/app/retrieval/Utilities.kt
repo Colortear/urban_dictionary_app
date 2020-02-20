@@ -5,7 +5,7 @@ import java.io.IOException
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
-//@Throws(IOException::class)
+@Throws(IOException::class)
 fun getHttpsRequest(
     url: String,
     timeout: Int,

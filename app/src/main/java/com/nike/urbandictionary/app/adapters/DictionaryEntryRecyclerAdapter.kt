@@ -3,18 +3,12 @@ package com.nike.urbandictionary.app.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.UiThread
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
 import com.nike.urbandictionary.R
 import com.nike.urbandictionary.app.models.DictionaryEntryModel
 import kotlinx.android.synthetic.main.list_item.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 class DictionaryEntryRecyclerAdapter(
     private val dictionaryEntries: MutableLiveData<List<DictionaryEntryModel>>
