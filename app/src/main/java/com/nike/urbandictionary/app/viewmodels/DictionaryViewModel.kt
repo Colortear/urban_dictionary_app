@@ -1,8 +1,7 @@
 package com.nike.urbandictionary.app.viewmodels
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.nike.urbandictionary.app.models.DictionaryEntryModel
 import com.nike.urbandictionary.app.RequestDictionaryEntries
 import com.nike.urbandictionary.app.removeBrackets
@@ -15,10 +14,7 @@ import java.time.LocalDate
 
 const val DATE_CHAR_COUNT = 10
 
-class DictionaryViewModel(
-    application: Application,
-    private val requestDictionaryEntries: RequestDictionaryEntries
-) : AndroidViewModel(application) {
+class DictionaryViewModel(private val requestDictionaryEntries: RequestDictionaryEntries) : ViewModel() {
 
     var dictionaryEntries: MutableLiveData<List<DictionaryEntryModel>> = MutableLiveData()
     private var orderDescendingLikes = true

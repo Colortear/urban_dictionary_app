@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 
     private val appContainer = (application as UrbanDictionaryApplication?)?.appContainer ?: AppContainer()
     private val viewModel: DictionaryViewModel by lazy {
-        val factory = DictionaryViewModelFactory(application, appContainer.requestDictionaryEntries)
+        val factory = DictionaryViewModelFactory(appContainer.requestDictionaryEntries)
 
         ViewModelProvider(this, factory).get(DictionaryViewModel::class.java)
     }
@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
     private val observer = Observer<List<DictionaryEntryModel>> {
         listDisplayManager.replaceCurrentView(item_list)
         listAdapter.notifyDataSetChanged()
+        resetScrollPosition()
     }
     lateinit var listDisplayManager: ListDisplayManager
 
@@ -71,6 +72,11 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
     private fun createFilterClickListener(vm: DictionaryViewModel) = View.OnClickListener {
         vm.onFilterButtonClick()
         filter_button.fadeTransition { (it as ImageButton).setImageResource(getThumbDrawable()) }
+    }
+
+    private fun resetScrollPosition() {
+        recyclerLayoutManager.scrollToPositionWithOffset(0, 0)
+        item_list.scrollToPosition(0)
     }
 
     private fun getThumbDrawable() =
