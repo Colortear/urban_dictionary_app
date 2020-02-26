@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nike.urbandictionary.R
@@ -19,6 +20,7 @@ import com.nike.urbandictionary.app.models.DictionaryEntryModel
 import com.nike.urbandictionary.app.ui.DictionaryListViewManager
 import com.nike.urbandictionary.app.ui.ListDisplayManager
 import com.nike.urbandictionary.app.viewmodels.DictionaryViewModel
+import com.nike.urbandictionary.app.viewmodels.DictionaryViewModelFactory
 import com.nike.urbandictionary.responses.EmptyResponse
 import com.nike.urbandictionary.responses.Failure
 import com.nike.urbandictionary.responses.Responses
@@ -30,7 +32,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 
     private val appContainer = (application as UrbanDictionaryApplication?)?.appContainer ?: AppContainer()
     private val viewModel: DictionaryViewModel by lazy {
-        DictionaryViewModel(application, appContainer.requestDictionaryEntries)
+        val factory = DictionaryViewModelFactory(application, appContainer.requestDictionaryEntries)
+
+        ViewModelProvider(this, factory).get(DictionaryViewModel::class.java)
     }
     private val listAdapter: DictionaryEntryRecyclerAdapter by lazy {
         DictionaryEntryRecyclerAdapter(viewModel.dictionaryEntries)
