@@ -1,7 +1,6 @@
 package com.nike.urbandictionary.app.viewmodels
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
 import com.nike.urbandictionary.app.RequestDictionaryEntries
 
 class DictionaryViewModelFactory(

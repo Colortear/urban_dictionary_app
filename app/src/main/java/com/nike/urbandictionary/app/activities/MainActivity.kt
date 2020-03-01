@@ -28,6 +28,8 @@ import com.nike.urbandictionary.responses.Success
 import kotlinx.android.synthetic.main.main_layout.*
 import kotlinx.coroutines.*
 
+const val PERSIST_DATA_KEY = "SearchTerm"
+
 class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 
     private val appContainer = (application as UrbanDictionaryApplication?)?.appContainer ?: AppContainer()
@@ -49,13 +51,19 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
     }
     lateinit var listDisplayManager: ListDisplayManager
 
+    /*
+    ** could also create the viewmodel with a class implementing AbstractStateViewModelFactory if there were any members that represented state.
+    ** this only requires searching again.
+    */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.main_layout)
         viewModel.dictionaryEntries.observe(this, observer)
         listDisplayManager = DictionaryListViewManager(empty_list_message)
-        search_bar.setOnQueryTextListener(createSearchQueryListener(viewModel))
+        search_bar.run {
+            setOnQueryTextListener(createSearchQueryListener(viewModel))
+        }
         filter_button.run {
             setOnClickListener(createFilterClickListener(viewModel))
             setImageResource(R.drawable.like)
@@ -67,6 +75,14 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
             adapter = listAdapter
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         }
+        savedInstanceState?.getString(PERSIST_DATA_KEY)?.let { term ->
+            search_bar.setQuery(term, true)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(PERSIST_DATA_KEY, search_bar.query.toString())
     }
 
     private fun createFilterClickListener(vm: DictionaryViewModel) = View.OnClickListener {
@@ -86,10 +102,10 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
         return object : SearchView.OnQueryTextListener {
             override fun onQueryTextChange(newText: String?): Boolean = false
             override fun onQueryTextSubmit(query: String?): Boolean {
+                listDisplayManager.replaceCurrentView(progress_bar)
                 launch {
                     handleResponseForUI(vm.getDictionaryEntries(query ?: ""))
                 }
-                listDisplayManager.replaceCurrentView(progress_bar)
                 return false
             }
         }
