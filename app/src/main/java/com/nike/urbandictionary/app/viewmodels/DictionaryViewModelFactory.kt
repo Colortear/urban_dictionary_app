@@ -1,14 +1,9 @@
 package com.nike.urbandictionary.app.viewmodels
 
 import androidx.lifecycle.*
-import com.nike.urbandictionary.app.RequestDictionaryEntries
 
-class DictionaryViewModelFactory(
-    private val requestDictionaryEntries: RequestDictionaryEntries
-) : ViewModelProvider.Factory {
+class DictionaryViewModelFactory(private val useCases: UseCases) : ViewModelProvider.Factory {
 
     @SuppressWarnings("unchecked")
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        return DictionaryViewModel(requestDictionaryEntries) as T
-    }
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T  = DictionaryViewModel(useCases) as T
 }

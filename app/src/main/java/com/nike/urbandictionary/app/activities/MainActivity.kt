@@ -21,6 +21,7 @@ import com.nike.urbandictionary.app.ui.DictionaryListViewManager
 import com.nike.urbandictionary.app.ui.ListDisplayManager
 import com.nike.urbandictionary.app.viewmodels.DictionaryViewModel
 import com.nike.urbandictionary.app.viewmodels.DictionaryViewModelFactory
+import com.nike.urbandictionary.app.viewmodels.UseCases
 import com.nike.urbandictionary.responses.EmptyResponse
 import com.nike.urbandictionary.responses.Failure
 import com.nike.urbandictionary.responses.Responses
@@ -32,11 +33,14 @@ const val PERSIST_DATA_KEY = "SearchTerm"
 
 class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 
-    private val appContainer = (application as UrbanDictionaryApplication?)?.appContainer ?: AppContainer()
-    private val viewModel: DictionaryViewModel by lazy {
-        val factory = DictionaryViewModelFactory(appContainer.requestDictionaryEntries)
+    // TODO implement a button for voice recognition as well as a voice recognition state.
 
-        ViewModelProvider(this, factory).get(DictionaryViewModel::class.java)
+    private val appContainer = (application as UrbanDictionaryApplication?)?.appContainer ?: AppContainer(application as UrbanDictionaryApplication)
+    private val viewModel: DictionaryViewModel by lazy {
+        val useCases = appContainer.run { UseCases(requestDictionaryEntries, requestVoiceRecognition) }
+        val factory = DictionaryViewModelFactory(useCases)
+
+        ViewModelProvider(this@MainActivity, factory).get(DictionaryViewModel::class.java)
     }
     private val listAdapter: DictionaryEntryRecyclerAdapter by lazy {
         DictionaryEntryRecyclerAdapter(viewModel.dictionaryEntries)
@@ -98,8 +102,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
     private fun getThumbDrawable() =
         if (viewModel.isOrderedAscending()) R.drawable.like else R.drawable.dislike
 
-    private fun createSearchQueryListener(vm: DictionaryViewModel) : SearchView.OnQueryTextListener {
-        return object : SearchView.OnQueryTextListener {
+    private fun createSearchQueryListener(vm: DictionaryViewModel) : SearchView.OnQueryTextListener =
+        object : SearchView.OnQueryTextListener {
             override fun onQueryTextChange(newText: String?): Boolean = false
             override fun onQueryTextSubmit(query: String?): Boolean {
                 listDisplayManager.replaceCurrentView(progress_bar)
@@ -109,7 +113,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
                 return false
             }
         }
-    }
 
     private fun handleResponseForUI(response: Responses<String>) {
         when (response) {

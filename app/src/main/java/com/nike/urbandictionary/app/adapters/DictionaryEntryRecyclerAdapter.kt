@@ -33,10 +33,6 @@ class DictionaryEntryRecyclerAdapter(
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DictionaryEntryViewHolder {
-        val itemView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.list_item, parent, false) as ConstraintLayout
-
-        return DictionaryEntryViewHolder(itemView)
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DictionaryEntryViewHolder =
+        DictionaryEntryViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item, parent, false) as ConstraintLayout)
 }

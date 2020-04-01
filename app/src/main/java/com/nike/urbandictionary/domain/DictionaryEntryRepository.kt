@@ -4,4 +4,5 @@ import com.nike.urbandictionary.responses.Responses
 
 interface DictionaryEntryRepository {
     fun requestDictionaryEntries(requestTerm: String) : Responses<List<DictionaryEntry>>
+    fun requestVoiceRecognition() : Responses<List<DictionaryEntry>>
 }
